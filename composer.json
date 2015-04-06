@@ -1,0 +1,38 @@
+{
+  "name": "dcb9/yii2-yunpian",
+    "description": "yunpian sdk for yii2",
+    "keywords": ["yii2", "yunpian", "sdk"],
+    "homepage": "https://github.com/dcb9/yii2-yunpian",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+    {
+      "name": "dcb9",
+      "email": "bob@phpor.me",
+      "homepage": "http://blog.phpor.me",
+      "role": "Creator"
+    }
+  ],
+    "support": {
+      "issues": "https://github.com/dcb9/yii2-yunpian/issues",
+      "source": "https://github.com/dcb9/yii2-yunpian"
+    },
+    "require": {
+      "php": ">=5.4.0",
+      "yiisoft/yii2": "2.0.*",
+      "guzzlehttp/guzzle": "~5.0"
+    },
+    "require-dev": {
+      "phpunit/phpunit": "3.7.*"
+    },
+    "autoload": {
+      "psr-4": {
+        "dcb9\\Yunpian\\sdk\\": "src"
+      }
+    },
+    "extra": {
+      "branch-alias": {
+        "dev-master": "0.0.x-dev"
+      }
+    }
+}
