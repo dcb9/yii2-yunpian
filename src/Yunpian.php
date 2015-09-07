@@ -167,6 +167,29 @@ class Yunpian extends \yii\base\Component
     public $function;
     public $urlFormat;
 
+    /**
+     * @var boolean whether to save sms messages as files under [[fileTransportPath]] instead of sending them
+     * to the actual recipients. This is usually used during development for debugging purpose.
+     * @see fileTransportPath
+     */
+    public $useFileTransport = false;
+    /**
+     * @var string the directory where the sms messages are saved when [[useFileTransport]] is true.
+     */
+    public $fileTransportPath = '@runtime/sms';
+    /**
+     * @var callable a PHP callback that will be called by [[sendSms()]] when [[useFileTransport]] is true.
+     * The callback should return a file name which will be used to save the sms message.
+     * If not set, the file name will be generated based on the current timestamp.
+     *
+     * The signature of the callback is:
+     *
+     * ~~~
+     * function ($mobile, $text)
+     * ~~~
+     */
+    public $fileTransportCallback;
+
     // /{resource}/{function}.{format}?apikey={apikey}
 
     /**
@@ -187,6 +210,42 @@ class Yunpian extends \yii\base\Component
     }
 
     /**
+     * @return string the file name for saving the message when [[useFileTransport]] is true.
+     */
+    public function generateMessageFileName()
+    {
+        $time = microtime(true);
+
+        return date('Ymd-His-', $time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d',
+            mt_rand(0, 10000)) . '.txt';
+    }
+
+    /**
+     * @param $mobile
+     * @param $text
+     * @return bool
+     */
+    public function saveSms($mobile, $text)
+    {
+        $path = Yii::getAlias($this->fileTransportPath);
+        if (!is_dir(($path))) {
+            mkdir($path, 0777, true);
+        }
+
+        if ($this->fileTransportCallback !== null) {
+            $file = $path . '/' . call_user_func($this->fileTransportCallback, $mobile, $text);
+        } else {
+            $file = $path . '/' . $this->generateMessageFileName();
+        }
+
+        $mobile = is_array($mobile) ? implode(',', $mobile) : $mobile;
+        $content = sprintf("mobile: %s\n\rtext:%s", $mobile, $text);
+        file_put_contents($file, $content);
+
+        return true;
+    }
+
+    /**
      * 发送短信
      *
      * 群发时最多只能发 100 条，所以我们这里最多发 90 条，多出来的用回调解决
@@ -197,6 +256,10 @@ class Yunpian extends \yii\base\Component
      */
     public function sendSms($mobile, $text)
     {
+        if ($this->useFileTransport) {
+            return $this->saveSms($mobile, $text);
+        }
+
         if (!is_array($mobile)) {
             $mobile = explode(',', $mobile);
         }

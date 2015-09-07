@@ -22,7 +22,7 @@ $ composer require dcb9/yii2-yunpian
 ## Usage
 
 ```php
-# file app/config/main.php
+\# file app/config/main.php
 <?php
 
 return [
@@ -30,6 +30,7 @@ return [
 	   'yunpian' => [
             'class' => 'dcb9\Yunpian\sdk\Yunpian',
             'apiKey' => 'your yunpian apiKey',
+            // 'useFileTransport' => false, // 如果该值为 true 则不会真正的发送短信，而是把内容写到文件里面，测试环境经常需要用到！
         ],
     ],
 ];
