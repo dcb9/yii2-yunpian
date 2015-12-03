@@ -1,7 +1,6 @@
 <?php
 
 use dcb9\Yunpian\sdk\Yunpian;
-use Yii;
 
 class YunpianTest extends PHPUnit_Framework_TestCase
 {
