@@ -1,7 +1,6 @@
 <?php
 
 use dcb9\Yunpian\sdk\Yunpian;
-use Yii;
 
 class YunpianTest extends PHPUnit_Framework_TestCase
 {
@@ -33,6 +32,18 @@ class YunpianTest extends PHPUnit_Framework_TestCase
         $realFile = $component->fileTransportPath . '/' . $fileName;
         $this->assertTrue(file_exists($realFile));
         unlink($realFile);
+    }
+
+    public function testLastError()
+    {
+        $sms = $this->component;
+        $sms->useFileTransport = false;
+        if (!$sms->sendSms('01234567890', 'test content') && $sms->hasError()) {
+            $error = $sms->getLastError();
+            $this->assertTrue(isset($error['code']));
+            $this->assertTrue(isset($error['msg']));
+            $this->assertTrue(isset($error['detail']));
+        }
     }
 
     /**

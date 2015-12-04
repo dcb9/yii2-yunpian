@@ -19,7 +19,7 @@ OR
 $ composer require dcb9/yii2-yunpian
 ```
 
-## Usage
+## Configurtion
 
 ```php
 \# file app/config/main.php
@@ -34,4 +34,22 @@ return [
         ],
     ],
 ];
+```
+
+## Usage
+
+```php
+$phone = '01234567890';
+// $phone = ['01234567890'];   # 可以为数组
+// $phone = '12345678900,01234567890';  # 还可以号码与号码之间用空格隔开
+$text ='sms content';
+$sms = Yii::$app->yunpian;
+if($sms->sendSms($phone, $text))
+{
+    $responseBody = $sms->getBody();
+    # ["code"=>0, "msg"=>"OK", "result" => ["count" => 1, "fee" => 1, "sid" => 3995844410]]
+} elseif ($sms->hasError()) {
+    $error = $sms->getLastError()
+    # ["code" => 2, "msg" => "请求参数格式错误", "detail" => "参数 text 格式不正确，text短信内容头部需要加签名,如【云片网】"]
+}
 ```

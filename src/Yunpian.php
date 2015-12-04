@@ -192,6 +192,17 @@ class Yunpian extends \yii\base\Component
 
     // /{resource}/{function}.{format}?apikey={apikey}
 
+
+    private $lastError;
+
+    public function getLastError()
+    {
+        $lastError = $this->lastError;
+        $this->lastError = null;
+
+        return $lastError;
+    }
+
     /**
      * @throws InvalidConfigException
      */
@@ -200,7 +211,7 @@ class Yunpian extends \yii\base\Component
         if ($this->apiKey === null) {
             throw new InvalidConfigException('The apiKey property must be set.');
         }
-        $this->urlFormat = static::YUNPIAN_URL_DOMAIN
+        $this->urlFormat = self::YUNPIAN_URL_DOMAIN
             . '/'
             . $this->version
             . '/%s/%s.'
@@ -245,6 +256,17 @@ class Yunpian extends \yii\base\Component
         return true;
     }
 
+    public function hasError()
+    {
+        return $this->lastError != null;
+    }
+
+    protected function setError($msg, $code = null, $detail = '')
+    {
+        $this->lastError = compact('msg', 'code', 'detail');
+        Yii::error($msg, self::LOG_CATEGORY);
+    }
+
     /**
      * 发送短信
      *
@@ -265,6 +287,8 @@ class Yunpian extends \yii\base\Component
         }
 
         if (empty($mobile)) {
+            $this->setError("手机号不得为空");
+
             return false;
         }
 
@@ -279,42 +303,41 @@ class Yunpian extends \yii\base\Component
             if ($isPhoneNumber) {
                 return true;
             } else {
-                Yii::error("Error phone number: " . $val);
+                $this->setError("Error phone number: " . $val);
 
                 return false;
             }
         });
 
-        $body = [
-            'mobile' => implode(',', $mobile),
-            'text' => $text,
-        ];
-
-        $url = sprintf(
-            $this->urlFormat,
-            static::RESOURCE_SMS,
-            static::FUNCTION_SEND
-        );
+        $body = ['mobile' => implode(',', $mobile), 'text' => $text,];
+        $url = sprintf($this->urlFormat, self::RESOURCE_SMS, self::FUNCTION_SEND);
 
         if (($body = $this->post($url, $body)) === false) {
             return false;
         }
 
         $code = $body['code'];
-        if ($code != static::CODE_0) {
+        if ($code != self::CODE_0) {
             $n = new ConstDocHelper(__CLASS__);
             if ($code < 0) {
                 $const = 'CODE_N' . (-$code);
             } else {
                 $const = 'CODE_' . $code;
             }
-            $str = $n->getDocComment($const);
-            Yii::error($str);
+            $this->setError($n->getDocComment($const), $code, $body['detail']);
 
             return false;
         }
+        $this->body = $body;
 
-        return $body;
+        return true;
+    }
+
+    protected $body;
+
+    public function getBody()
+    {
+        return $this->body;
     }
 
     private function post($url, array $body)
@@ -337,7 +360,7 @@ class Yunpian extends \yii\base\Component
             if ($e->hasResponse()) {
                 $message .= $e->getResponse() . "\n";
             }
-            Yii::error($message, static::LOG_CATEGORY);
+            $this->setError($message);
 
             return false;
         }
@@ -355,6 +378,8 @@ class Yunpian extends \yii\base\Component
 
             return $body;
         } else {
+            $this->setError("http request status code is not 200");
+
             return false;
         }
     }
